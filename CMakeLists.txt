@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 3.1...3.28)
+cmake_minimum_required(VERSION 3.25)
 project(TestCMake LANGUAGES CXX)
 
-add_subdirectory(libraries/json)
-add_subdirectory(libraries/pugixml)
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(
     TestCMake
@@ -15,6 +14,25 @@ add_executable(
     src/DataField.cpp
     src/Subfield.cpp
 )
+
+include(FetchContent)
+
+FetchContent_Declare(
+  json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG        v3.11.3
+)
+
+FetchContent_MakeAvailable(json)
+
+FetchContent_Declare(
+  pugixml
+  GIT_REPOSITORY https://github.com/zeux/pugixml.git
+  GIT_TAG        v1.14
+)
+
+FetchContent_MakeAvailable(json)
+FetchContent_MakeAvailable(pugixml)
 
 target_link_libraries(TestCMake PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(TestCMake PRIVATE pugixml::pugixml)
