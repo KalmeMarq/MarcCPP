@@ -9,7 +9,7 @@
 
 namespace kmmarc
 {
-    DataField readDataField(std::string tag, std::string data)
+    DataField readDataField(Encoding encoding, std::string tag, std::string data)
     {
         DataField dataField;
         dataField.setTag((uint16_t) std::stoi(tag));
@@ -18,7 +18,7 @@ namespace kmmarc
 
         const char* raw_data = data.c_str();
 
-        int offset = 3;
+        int offset = 0;
         while (offset < data.length()) {
             char readByte = raw_data[offset++];
 
@@ -39,7 +39,8 @@ namespace kmmarc
 
                 Subfield subfield;
                 subfield.setCode(code);
-                subfield.setData(data.substr(bck_offset, offset - bck_offset));
+                std::string subfieldData = data.substr(bck_offset, offset - bck_offset);
+                subfield.setData(encoding == Encoding::Utf8 ? utf8_to_iso_8859_1(subfieldData) : subfieldData);
                 dataField.subfields.push_back(subfield);
             }
             else if (readByte == FT)
@@ -51,7 +52,7 @@ namespace kmmarc
         return dataField;
     }
 
-    std::vector<Record> read_mrc(const char* path)
+    std::vector<Record> read_mrc(const char* path, Encoding encoding)
     {
         std::vector<Record> records;
         
@@ -67,6 +68,8 @@ namespace kmmarc
             leader.unmarshal(leaderStr);
 
             kmmarc::Record record(leader);
+
+            Encoding recordEncoding = leader.getCharCodingScheme() == 'a' ? Encoding::Utf8 : Encoding::Iso85591;
 
             std::vector<char> recordBuffer(leader.getRecordLength() - 24, 0);
             input.read(recordBuffer.data(), recordBuffer.size());
@@ -96,12 +99,13 @@ namespace kmmarc
                 if (tagN < 10) {
                     kmmarc::ControlField controlField;
                     controlField.setTag((uint16_t) tagN);
-                    controlField.setData(contentStr.substr(starts[i] + 1, lengths[i] - 1));
+                    std::string data = contentStr.substr(starts[i] + 1, lengths[i] - 1);
+                    controlField.setData(recordEncoding == Encoding::Utf8 ? utf8_to_iso_8859_1(data) : data);
                     record.controlFields.push_back(controlField);
                 }
                 else
                 {
-                    kmmarc::DataField dataField = kmmarc::readDataField(tags[i], contentStr.substr(starts[i] + 1, lengths[i]));
+                    kmmarc::DataField dataField = kmmarc::readDataField(recordEncoding, tags[i], contentStr.substr(starts[i] + 1, lengths[i]));
                     record.dataFields.push_back(dataField);
                 }
             }
@@ -122,6 +126,63 @@ namespace kmmarc
     std::vector<Record> read_mrk(const char* path)
     {
         std::vector<Record> records;
+
+        std::ifstream input;
+        input.open(path);
+
+        if (input.is_open())
+        {
+            std::string line;
+            size_t lineIdx = 0;
+
+            Record record;
+
+            while (std::getline(input, line))
+            {
+                if (line.size() == 0)
+                {
+                    records.push_back(record);
+                    record = Record();
+                    continue;
+                }
+
+                std::string n = line.substr(1, 3);
+
+                if (n == "LDR")
+                {
+                    record.leader.unmarshal(line.substr(5, line.size() - 5));
+                }
+                else
+                {
+                    int tagN = std::stoi(n);
+
+                    if (tagN < 10)
+                    {
+                        ControlField field;
+                        field.setTag((uint16_t) tagN);
+                        field.setData(line.substr(5, line.size() - 5));
+
+                        record.controlFields.push_back(field);
+                    }
+                    else
+                    {
+                        DataField field;
+                        field.setTag((uint16_t) tagN);
+                        field.setInd1(line.at(5) == '/' ? ' ' : line.at(5));
+                        field.setInd2(line.at(6) == '/' ? ' ' : line.at(6));
+
+                        record.dataFields.push_back(field);
+                    }
+                }
+
+                ++lineIdx;
+            }
+            
+            records.push_back(record);
+        }
+
+        input.close();
+
         return records;
     }
 
@@ -265,7 +326,7 @@ namespace kmmarc
         return records;
     }
 
-    void write_mrc(const char* path, std::vector<Record>& records, Encoding encoding)
+    void write_mrc(const char* path, std::vector<Record>& records, Encoding encoding, bool is_encoding_forced)
     {
         std::ofstream output;
         output.open(path, std::ios::binary);
@@ -274,8 +335,10 @@ namespace kmmarc
         {
             for (Record& record : records)
             {
-                Encoding recordEncoding = encoding;
                 std::string leader_str = record.leader.marshal();
+                Encoding recordEncoding = encoding;
+                Encoding storedEncoding = leader_str.at(9) == 'a' ? Encoding::Utf8 : Encoding::Iso85591;
+
                 if (encoding == Encoding::Default)
                 {
                     if (leader_str.at(9) == 'a')
@@ -287,6 +350,10 @@ namespace kmmarc
                         recordEncoding = Encoding::Iso85591;
                     }
                 }
+                else if (!is_encoding_forced)
+                {
+                    leader_str[9] = Encoding::Utf8 ? 'a' : ' ';
+                }
 
                 std::ostringstream dir_buf;
 		        std::ostringstream data_buf;
@@ -294,7 +361,8 @@ namespace kmmarc
                 size_t previous = 0;
                 for (ControlField& field : record.controlFields)
                 {
-                    data_buf << field.getData() << (char)FT;
+                    std::string fieldData = field.getData();
+                    data_buf << (recordEncoding == Encoding::Utf8 ? iso_8859_1_to_utf8(fieldData) : storedEncoding == Encoding::Utf8 ? utf8_to_iso_8859_1(fieldData) : fieldData) << (char)FT;
                     size_t a = data_buf.tellp();
                     dir_buf << getTagCodeFormatted(field.getTag());
                     {
@@ -323,7 +391,8 @@ namespace kmmarc
                     {
                         data_buf << (char)US;
                         data_buf << subfield.getCode();
-                        data_buf << subfield.getData();
+                        std::string subfieldData = subfield.getData();
+                        data_buf << (recordEncoding == Encoding::Utf8 ? iso_8859_1_to_utf8(subfieldData) : storedEncoding == Encoding::Utf8 ? utf8_to_iso_8859_1(subfieldData) : subfieldData);
                     }
 
                     data_buf << (char)FT;
@@ -348,9 +417,32 @@ namespace kmmarc
                 }
 
                 data_buf << (char)RT;
+
+                data_buf.seekp(0, std::ios::end);
+                int data_buf_size = data_buf.tellp();
+                data_buf.seekp(0, std::ios::beg);
                 
+                dir_buf.seekp(0, std::ios::end);
+                int dir_buf_size = dir_buf.tellp();
+                dir_buf.seekp(0, std::ios::beg);
+
+                int recordLength = data_buf_size + dir_buf_size + 24 + 1;
+                {
+                    std::stringstream ss;
+                    char data[6] = { 0 };
+                    std::snprintf(data, 6, "%05d", recordLength);
+                    ss << data;
+                    std::string recordLengthStr = ss.str();
+                    leader_str[0] = recordLengthStr[0];
+                    leader_str[1] = recordLengthStr[1];
+                    leader_str[2] = recordLengthStr[2];
+                    leader_str[3] = recordLengthStr[3];
+                    leader_str[4] = recordLengthStr[4];
+                }
+
                 output << leader_str;
                 output << dir_buf.str();
+                output << (char) FT;
                 output << data_buf.str();
             }
 

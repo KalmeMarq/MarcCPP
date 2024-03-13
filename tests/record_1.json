@@ -1,0 +1,196 @@
+[
+    {
+        "leader": "01028nam0 2200277   450 ",
+        "fields": [
+            { "001": "0000001" },
+            { "005": "20040728100107.0" },
+            {
+                "102": {
+                    "subfields": [{ "a": "PT" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "966": {
+                    "subfields": [
+                        { "0": "2" },
+                        { "2": "Geral" },
+                        { "3": "BIB" },
+                        { "4": "Biblioteca" },
+                        { "a": "1-a" },
+                        { "b": "10/01/2012" },
+                        { "l": "CENCAL" },
+                        { "n": "3 ex.; " },
+                        { "s": "658 SIL" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "966": {
+                    "subfields": [
+                        { "0": "2" },
+                        { "2": "Geral" },
+                        { "3": "BIB" },
+                        { "4": "Biblioteca" },
+                        { "a": "1-b" },
+                        { "b": "10/01/2012" },
+                        { "l": "CENCAL" },
+                        { "s": "658 SIL" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "966": {
+                    "subfields": [
+                        { "0": "2" },
+                        { "2": "Geral" },
+                        { "3": "BIB" },
+                        { "4": "Biblioteca" },
+                        { "a": "1-c" },
+                        { "b": "10/01/2012" },
+                        { "l": "CENCAL" },
+                        { "s": "658 SIL" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "215": {
+                    "subfields": [
+                        { "a": "209 p." },
+                        { "c": "il." },
+                        { "d": "24 cm" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "606": {
+                    "subfields": [
+                        { "a": "economia" },
+                        { "x": "sector cerâmico" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "101": {
+                    "subfields": [{ "a": "por" }],
+                    "ind1": "0",
+                    "ind2": " "
+                }
+            },
+            {
+                "200": {
+                    "subfields": [
+                        { "a": "Cerâmica" },
+                        {
+                            "e": "<um >caso paradigmático da \"humanofactura\"?"
+                        },
+                        {
+                            "e": "para uma \"visão\" das flexibilidades nas empresas e das organizações qualificantes"
+                        },
+                        { "f": "José Luís de Almeida Silva" }
+                    ],
+                    "ind1": "1",
+                    "ind2": " "
+                }
+            },
+            {
+                "095": {
+                    "subfields": [{ "a": "PTBN00988280" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "010": {
+                    "subfields": [{ "a": "972-97575-0-X" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "021": {
+                    "subfields": [{ "a": "PT" }, { "b": "118175/97" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "106": { "subfields": [{ "a": "r" }], "ind1": " ", "ind2": " " }
+            },
+            {
+                "035": {
+                    "subfields": [{ "a": "0000001" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "100": {
+                    "subfields": [
+                        { "a": "20000807d1997    m--y0pory0103    ba" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "930": {
+                    "subfields": [{ "d": "658 SIL" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "210": {
+                    "subfields": [
+                        { "a": "Caldas da Rainha" },
+                        { "c": "Cencal" },
+                        { "d": "1997" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "601": {
+                    "subfields": [
+                        {
+                            "a": "Fábrica de Faianças Artísticas Rafael Bordalo Pinheiro"
+                        },
+                        { "x": "[Estudos de caso]" }
+                    ],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "105": {
+                    "subfields": [{ "a": "a   z   001yy" }],
+                    "ind1": " ",
+                    "ind2": " "
+                }
+            },
+            {
+                "700": {
+                    "subfields": [
+                        { "a": "Silva" },
+                        { "b": "José Luis de Almeida" }
+                    ],
+                    "ind1": " ",
+                    "ind2": "1"
+                }
+            }
+        ]
+    }
+]
