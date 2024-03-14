@@ -16,7 +16,7 @@ namespace kmmarc
         dataField.setInd1(data.at(0));
         dataField.setInd2(data.at(1));
 
-        const char* raw_data = data.c_str();
+        const char *raw_data = data.c_str();
 
         int offset = 0;
         while (offset < data.length()) {
@@ -52,7 +52,7 @@ namespace kmmarc
         return dataField;
     }
 
-    std::vector<Record> read_mrc(const char* path, Encoding encoding)
+    std::vector<Record> read_mrc(const char *path, Encoding encoding)
     {
         std::vector<Record> records;
         
@@ -123,7 +123,7 @@ namespace kmmarc
         return records;
     }
 
-    std::vector<Record> read_mrk(const char* path)
+    std::vector<Record> read_mrk(const char *path)
     {
         std::vector<Record> records;
 
@@ -171,6 +171,26 @@ namespace kmmarc
                         field.setInd1(line.at(5) == '/' ? ' ' : line.at(5));
                         field.setInd2(line.at(6) == '/' ? ' ' : line.at(6));
 
+                        size_t df_size = line.size() - 7;
+
+                        for (size_t i = 7; i < df_size; ++i)
+                        {
+                            if (line.at(i) == '$')
+                            {
+                                char code = line.at(i + 1);
+                                i += 2;
+
+                                size_t bck_i = i;
+                                while (i < df_size && line.at(i) != '$')
+                                {
+                                    ++i;
+                                }
+
+                                Subfield subfield(code, line.substr(bck_i, i - bck_i));
+                                field.subfields.push_back(subfield);
+                            }
+                        }
+
                         record.dataFields.push_back(field);
                     }
                 }
@@ -186,13 +206,90 @@ namespace kmmarc
         return records;
     }
 
-    std::vector<Record> read_mrk8(const char* path)
+    std::vector<Record> read_mrk8(const char *path)
     {
         std::vector<Record> records;
+
+        std::ifstream input;
+        input.open(path);
+
+        if (input.is_open())
+        {
+            std::string line;
+            size_t lineIdx = 0;
+
+            Record record;
+
+            while (std::getline(input, line))
+            {
+                if (line.size() == 0)
+                {
+                    records.push_back(record);
+                    record = Record();
+                    continue;
+                }
+
+                std::string n = line.substr(1, 3);
+
+                if (n == "LDR")
+                {
+                    record.leader.unmarshal(line.substr(5, line.size() - 5));
+                }
+                else
+                {
+                    int tagN = std::stoi(n);
+
+                    if (tagN < 10)
+                    {
+                        ControlField field;
+                        field.setTag((uint16_t) tagN);
+                        field.setData(line.substr(5, line.size() - 5));
+
+                        record.controlFields.push_back(field);
+                    }
+                    else
+                    {
+                        DataField field;
+                        field.setTag((uint16_t) tagN);
+                        field.setInd1(line.at(5) == '/' ? ' ' : line.at(5));
+                        field.setInd2(line.at(6) == '/' ? ' ' : line.at(6));
+
+                        size_t df_size = line.size() - 7;
+
+                        for (size_t i = 7; i < df_size; ++i)
+                        {
+                            if (line.at(i) == '$')
+                            {
+                                char code = line.at(i + 1);
+                                i += 2;
+
+                                size_t bck_i = i;
+                                while (i < df_size && line.at(i) != '$')
+                                {
+                                    ++i;
+                                }
+
+                                Subfield subfield(code, line.substr(bck_i, i - bck_i));
+                                field.subfields.push_back(subfield);
+                            }
+                        }
+
+                        record.dataFields.push_back(field);
+                    }
+                }
+
+                ++lineIdx;
+            }
+            
+            records.push_back(record);
+        }
+
+        input.close();
+
         return records;
     }
 
-    std::vector<Record> read_json(const char* path)
+    std::vector<Record> read_json(const char *path)
     {
         std::vector<Record> records;
 
@@ -212,7 +309,7 @@ namespace kmmarc
             {
                 nlohmann::json f_obj = field_obj[j];
                 
-                for (auto& el : f_obj.items())
+                for (auto &el : f_obj.items())
                 {
                     uint16_t tag = (uint16_t) std::stoi(el.key());
 
@@ -239,7 +336,7 @@ namespace kmmarc
                         {
                             nlohmann::json f1_obj = subfield_arr[j];
                 
-                            for (auto& el1 : f1_obj.items())
+                            for (auto &el1 : f1_obj.items())
                             {
                                 char code = el1.key().at(0);
                                 Subfield subfield;
@@ -263,7 +360,7 @@ namespace kmmarc
         return records;
     }
     
-    std::vector<Record> read_xml(const char* path)
+    std::vector<Record> read_xml(const char *path)
     {
         std::vector<Record> records;
 
@@ -326,14 +423,14 @@ namespace kmmarc
         return records;
     }
 
-    void write_mrc(const char* path, std::vector<Record>& records, Encoding encoding, bool is_encoding_forced)
+    void write_mrc(const char *path, std::vector<Record> &records, Encoding encoding, bool is_encoding_forced)
     {
         std::ofstream output;
         output.open(path, std::ios::binary);
 
         if (output.is_open())
         {
-            for (Record& record : records)
+            for (Record &record : records)
             {
                 std::string leader_str = record.leader.marshal();
                 Encoding recordEncoding = encoding;
@@ -359,7 +456,7 @@ namespace kmmarc
 		        std::ostringstream data_buf;
 
                 size_t previous = 0;
-                for (ControlField& field : record.controlFields)
+                for (ControlField &field : record.controlFields)
                 {
                     std::string fieldData = field.getData();
                     data_buf << (recordEncoding == Encoding::Utf8 ? iso_8859_1_to_utf8(fieldData) : storedEncoding == Encoding::Utf8 ? utf8_to_iso_8859_1(fieldData) : fieldData) << (char)FT;
@@ -382,12 +479,12 @@ namespace kmmarc
                     previous = a;
                 }
 
-                for (DataField& field : record.dataFields)
+                for (DataField &field : record.dataFields)
                 {
                     data_buf << field.getInd1();
 			        data_buf << field.getInd2();
 
-                    for (Subfield& subfield : field.subfields)
+                    for (Subfield &subfield : field.subfields)
                     {
                         data_buf << (char)US;
                         data_buf << subfield.getCode();
@@ -450,13 +547,13 @@ namespace kmmarc
         }
     }
 
-    void write_mrk(const char* path, std::vector<Record>& records)
+    void write_mrk(const char *path, std::vector<Record> &records)
     {
         std::ofstream output;
         output.open(path);
 
         int i = 0;
-        for (Record& record : records)
+        for (Record &record : records)
         {
             output << "=LDR " << record.leader.marshal() << "\n";
             for (size_t i = 0; i < record.controlFields.size(); ++i)
@@ -487,14 +584,14 @@ namespace kmmarc
         output.close();
     }
 
-    void write_mrk8(const char* path, std::vector<Record>& records)
+    void write_mrk8(const char *path, std::vector<Record> &records)
     {
         std::ofstream out;
         std::stringstream output;
         out.open(path);
 
         int i = 0;
-        for (Record& record : records)
+        for (Record &record : records)
         {
             output << "=LDR " << record.leader.marshal() << "\n";
             for (size_t i = 0; i < record.controlFields.size(); ++i)
@@ -528,12 +625,12 @@ namespace kmmarc
         out.close();
     }
 
-    void write_json(const char* path, std::vector<Record>& records)
+    void write_json(const char *path, std::vector<Record> &records)
     {
         nlohmann::json arr;
 
         size_t i = 0;
-        for (Record& record : records)
+        for (Record &record : records)
         {
             nlohmann::json record_obj;
             record_obj["leader"] = record.leader.marshal();
@@ -541,7 +638,7 @@ namespace kmmarc
             nlohmann::json fields_arr;
 
             size_t ci = 0;
-            for (ControlField& field : record.controlFields)
+            for (ControlField &field : record.controlFields)
             {
                 nlohmann::json field_obj;
                 field_obj[getTagCodeFormatted(field.getTag())] = field.getData();
@@ -550,7 +647,7 @@ namespace kmmarc
                 ++ci;
             }
 
-            for (DataField& field : record.dataFields)
+            for (DataField &field : record.dataFields)
             {
                 nlohmann::json field_obj;
 
@@ -561,7 +658,7 @@ namespace kmmarc
                 nlohmann::json obj_arr;
                 
                 size_t si = 0;
-                for (Subfield& subfield : field.subfields)
+                for (Subfield &subfield : field.subfields)
                 {
                     nlohmann::json subfield_obj;
                     obj_arr[si] = subfield_obj;
@@ -586,18 +683,18 @@ namespace kmmarc
         output.close();
     }
 
-    void write_xml(const char* path, std::vector<Record>& records)
+    void write_xml(const char *path, std::vector<Record> &records)
     {
         pugi::xml_document doc;
         pugi::xml_node collection_node = doc.append_child("collection");
 
-        for (Record& record : records)
+        for (Record &record : records)
         {
             pugi::xml_node record_node = collection_node.append_child("record");
             pugi::xml_node leader_node = record_node.append_child("leader");
             leader_node.text().set(record.leader.marshal().c_str());
 
-            for (ControlField& field : record.controlFields)
+            for (ControlField &field : record.controlFields)
             {
                 pugi::xml_node field_node = record_node.append_child("controlfield");
                 pugi::xml_attribute tag_attr = field_node.append_attribute("tag");
@@ -607,7 +704,7 @@ namespace kmmarc
                 field_node.text().set(iso_8859_1_to_utf8(data).c_str());
             }
 
-            for (DataField& field : record.dataFields)
+            for (DataField &field : record.dataFields)
             {
                 pugi::xml_node field_node = record_node.append_child("datafield");
                 pugi::xml_attribute tag_attr = field_node.append_attribute("tag");
@@ -620,7 +717,7 @@ namespace kmmarc
                 indEnc[0] = field.getInd2();
                 ind2_attr.set_value(indEnc);
 
-                for (Subfield& subfield : field.subfields)
+                for (Subfield &subfield : field.subfields)
                 {
                     pugi::xml_node subfield_node = field_node.append_child("subfield");
                     pugi::xml_attribute code_attr = subfield_node.append_attribute("code");
@@ -654,7 +751,7 @@ namespace kmmarc
     }
 
     // From https://stackoverflow.com/a/39884120
-    std::string iso_8859_1_to_utf8(std::string& str)
+    std::string iso_8859_1_to_utf8(std::string &str)
     {
         std::string strOut;
         for (std::string::iterator it = str.begin(); it != str.end(); ++it)
@@ -672,9 +769,9 @@ namespace kmmarc
     }
 
     // From https://stackoverflow.com/a/23690194
-    std::string utf8_to_iso_8859_1(const std::string& in_str)
+    std::string utf8_to_iso_8859_1(const std::string &in_str)
     {
-        const char* in = in_str.c_str();
+        const char *in = in_str.c_str();
         std::string out;
         if (in == NULL) {
             return out;

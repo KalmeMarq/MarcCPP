@@ -12,16 +12,16 @@ namespace kmmarc
         uint16_t getRecordLength();
         char getRecordStatus();
         char getTypeOfRecord();
-        std::array<char, 2>& getImplDefined1();
+        std::array<char, 2> &getImplDefined1();
         char getCharCodingScheme();
         uint8_t getIndicatorCount();
         uint8_t getSubfieldLength();
         int getBaseAddressOfData();
-        std::array<char, 3>& getImplDefined2();
-        std::array<char, 4>& getEntryMap();
+        std::array<char, 3> &getImplDefined2();
+        std::array<char, 4> &getEntryMap();
 
         std::string marshal();
-        void unmarshal(const std::string& leader);
+        void unmarshal(const std::string &leader);
     private:
         uint16_t m_recordLength;
         char m_recordStatus;

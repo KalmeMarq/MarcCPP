@@ -19,7 +19,7 @@ namespace kmmarc
         return m_typeOfRecord;
     }
 
-    std::array<char, 2>& Leader::getImplDefined1()
+    std::array<char, 2> &Leader::getImplDefined1()
     {
         return m_implDefined1;
     }
@@ -44,12 +44,12 @@ namespace kmmarc
         return m_baseAddressOfData;
     }
 
-    std::array<char, 3>& Leader::getImplDefined2()
+    std::array<char, 3> &Leader::getImplDefined2()
     {
         return m_implDefined2;
     }
 
-    std::array<char, 4>& Leader::getEntryMap()
+    std::array<char, 4> &Leader::getEntryMap()
     {
         return m_entryMap;
     }
@@ -88,7 +88,7 @@ namespace kmmarc
         return result;
     }
 
-    void Leader::unmarshal(const std::string& leader)
+    void Leader::unmarshal(const std::string &leader)
     {
         m_recordLength = std::stoi(leader.substr(0, 5));
         m_recordStatus = leader.at(5);
