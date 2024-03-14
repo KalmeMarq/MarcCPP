@@ -7,7 +7,7 @@
 
 int main()
 {
-    std::vector<kmmarc::Record> records = kmmarc::read_mrk("C:/Users/FilipeMarques/TestCMake/tests/record_1_0.mrk");
+    std::vector<kmmarc::Record> records = kmmarc::read_mrk("../tests/record_1_0.mrk");
 
     std::cout << "Records: " << records.size() << std::endl;
 
